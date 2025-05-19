@@ -1,0 +1,29 @@
+
+        body {
+            font-family: monospace;
+            max-width: 900px;
+            margin: auto;
+        }
+    
+        section {
+            margin-bottom: 40px;
+        }
+    
+        input,
+        button {
+            margin: 5px 0;
+            padding: 6px;
+        }
+    
+        ul {
+            list-style: none;
+            padding-left: 0;
+        }
+    
+        li {
+            margin-bottom: 8px;
+        }
+    
+        button {
+            cursor: pointer;
+        }

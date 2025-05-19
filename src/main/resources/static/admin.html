@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin - Gerenciar Usuários e Livros</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <h1>Administração</h1>
+
+  <!-- Seção Usuários -->
+  <section>
+    <h2>Usuários</h2>
+    <ul id="listaUsuarios"></ul>
+
+    <h3>Adicionar / Editar Usuário</h3>
+    <form id="formUsuario">
+      <input type="hidden" id="usuarioId" />
+      <input type="text" id="usuarioNome" placeholder="Nome" required />
+      <input type="email" id="usuarioEmail" placeholder="Email" required />
+      <input type="password" id="usuarioSenha" placeholder="Senha" required />
+      <button type="submit">Salvar Usuário</button>
+      <button type="button" id="cancelarUsuario" style="display:none;">Cancelar</button>
+    </form>
+  </section>
+
+  <!-- Seção Livros -->
+  <section>
+    <h2>Livros</h2>
+    <ul id="listaLivros"></ul>
+
+    <h3>Adicionar / Editar Livro</h3>
+    <form id="formLivro">
+      <input type="hidden" id="livroId" />
+      <input type="text" id="livroTitulo" placeholder="Título" required />
+      <input type="text" id="livroAutor" placeholder="Autor" required />
+      <input type="text" id="livroEditora" placeholder="Editora" required />
+      <input type="number" id="livroAno" placeholder="Ano de Publicação" required />
+      <button type="submit">Salvar Livro</button>
+      <button type="button" id="cancelarLivro" style="display:none;">Cancelar</button>
+    </form>
+  </section>
+
+  <script>
+    const baseUrlUsuarios = 'http://localhost:8080/usuarios';
+    const baseUrlLivros = 'http://localhost:8080/livros';
+
+    // --- Usuários ---
+    const listaUsuarios = document.getElementById('listaUsuarios');
+    const formUsuario = document.getElementById('formUsuario');
+    const inputUsuarioId = document.getElementById('usuarioId');
+    const inputUsuarioNome = document.getElementById('usuarioNome');
+    const inputUsuarioEmail = document.getElementById('usuarioEmail');
+    const inputUsuarioSenha = document.getElementById('usuarioSenha');
+    const btnCancelarUsuario = document.getElementById('cancelarUsuario');
+
+    function carregarUsuarios() {
+      fetch(baseUrlUsuarios)
+        .then(res => res.json())
+        .then(usuarios => {
+          listaUsuarios.innerHTML = '';
+          usuarios.forEach(u => {
+            const li = document.createElement('li');
+            li.textContent = `${u.nome} (${u.email}) `;
+
+            // Botão Editar
+            const btnEditar = document.createElement('button');
+            btnEditar.textContent = 'Editar';
+            btnEditar.onclick = () => editarUsuario(u);
+            li.appendChild(btnEditar);
+
+            // Botão Excluir
+            const btnExcluir = document.createElement('button');
+            btnExcluir.textContent = 'Excluir';
+            btnExcluir.onclick = () => excluirUsuario(u.id);
+            li.appendChild(btnExcluir);
+
+            listaUsuarios.appendChild(li);
+          });
+        })
+        .catch(err => alert('Erro ao carregar usuários: ' + err));
+    }
+
+    function editarUsuario(usuario) {
+      inputUsuarioId.value = usuario.id;
+      inputUsuarioNome.value = usuario.nome;
+      inputUsuarioEmail.value = usuario.email;
+      inputUsuarioSenha.value = ''; // Senha não vem para segurança, usuário pode digitar nova
+      btnCancelarUsuario.style.display = 'inline-block';
+    }
+
+    function excluirUsuario(id) {
+      if (!confirm('Quer mesmo excluir esse usuário?')) return;
+      fetch(`${baseUrlUsuarios}/${id}`, { method: 'DELETE' })
+        .then(res => {
+          if (res.ok) {
+            alert('Usuário excluído com sucesso!');
+            carregarUsuarios();
+            limparFormularioUsuario();
+          } else {
+            alert('Erro ao excluir usuário');
+          }
+        });
+    }
+
+    function limparFormularioUsuario() {
+      inputUsuarioId.value = '';
+      inputUsuarioNome.value = '';
+      inputUsuarioEmail.value = '';
+      inputUsuarioSenha.value = '';
+      btnCancelarUsuario.style.display = 'none';
+    }
+
+    formUsuario.addEventListener('submit', e => {
+      e.preventDefault();
+
+      const id = inputUsuarioId.value;
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `${baseUrlUsuarios}/${id}` : baseUrlUsuarios;
+
+      const usuario = {
+        nome: inputUsuarioNome.value,
+        email: inputUsuarioEmail.value,
+        senha: inputUsuarioSenha.value
+      };
+
+      fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(usuario)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Erro ao salvar usuário');
+        return res.json();
+      })
+      .then(() => {
+        alert(id ? 'Usuário atualizado!' : 'Usuário criado!');
+        limparFormularioUsuario();
+        carregarUsuarios();
+      })
+      .catch(err => alert(err.message));
+    });
+
+    btnCancelarUsuario.addEventListener('click', limparFormularioUsuario);
+
+    // --- Livros ---
+    const listaLivros = document.getElementById('listaLivros');
+    const formLivro = document.getElementById('formLivro');
+    const inputLivroId = document.getElementById('livroId');
+    const inputLivroTitulo = document.getElementById('livroTitulo');
+    const inputLivroAutor = document.getElementById('livroAutor');
+    const inputLivroEditora = document.getElementById('livroEditora');
+    const inputLivroAno = document.getElementById('livroAno');
+    const btnCancelarLivro = document.getElementById('cancelarLivro');
+
+    function carregarLivros() {
+      fetch(baseUrlLivros)
+        .then(res => res.json())
+        .then(livros => {
+          listaLivros.innerHTML = '';
+          livros.forEach(l => {
+            const li = document.createElement('li');
+            li.textContent = `${l.titulo} - ${l.autor} `;
+
+            const btnEditar = document.createElement('button');
+            btnEditar.textContent = 'Editar';
+            btnEditar.onclick = () => editarLivro(l);
+            li.appendChild(btnEditar);
+
+            const btnExcluir = document.createElement('button');
+            btnExcluir.textContent = 'Excluir';
+            btnExcluir.onclick = () => excluirLivro(l.id);
+            li.appendChild(btnExcluir);
+
+            listaLivros.appendChild(li);
+          });
+        })
+        .catch(err => alert('Erro ao carregar livros: ' + err));
+    }
+
+    function editarLivro(livro) {
+      inputLivroId.value = livro.id;
+      inputLivroTitulo.value = livro.titulo;
+      inputLivroAutor.value = livro.autor;
+      inputLivroEditora.value = livro.editora;
+      inputLivroAno.value = livro.anoPublicacao;
+      btnCancelarLivro.style.display = 'inline-block';
+    }
+
+    function excluirLivro(id) {
+      if (!confirm('Quer mesmo excluir esse livro?')) return;
+      fetch(`${baseUrlLivros}/${id}`, { method: 'DELETE' })
+        .then(res => {
+          if (res.ok) {
+            alert('Livro excluído com sucesso!');
+            carregarLivros();
+            limparFormularioLivro();
+          } else {
+            alert('Erro ao excluir livro');
+          }
+        });
+    }
+
+    function limparFormularioLivro() {
+      inputLivroId.value = '';
+      inputLivroTitulo.value = '';
+      inputLivroAutor.value = '';
+      inputLivroEditora.value = '';
+      inputLivroAno.value = '';
+      btnCancelarLivro.style.display = 'none';
+    }
+
+    formLivro.addEventListener('submit', e => {
+      e.preventDefault();
+
+      const id = inputLivroId.value;
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? `${baseUrlLivros}/${id}` : baseUrlLivros;
+
+      const livro = {
+        titulo: inputLivroTitulo.value,
+        autor: inputLivroAutor.value,
+        editora: inputLivroEditora.value,
+        anoPublicacao: Number(inputLivroAno.value)
+      };
+
+      fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(livro)
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Erro ao salvar livro');
+        return res.json();
+      })
+      .then(() => {
+        alert(id ? 'Livro atualizado!' : 'Livro criado!');
+        limparFormularioLivro();
+        carregarLivros();
+      })
+      .catch(err => alert(err.message));
+    });
+
+    btnCancelarLivro.addEventListener('click', limparFormularioLivro);
+
+    // Carregar dados ao abrir a página
+    carregarUsuarios();
+    carregarLivros();
+  </script>
+</body>
+</html>
